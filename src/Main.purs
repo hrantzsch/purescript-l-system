@@ -1,40 +1,20 @@
 module Main where
 
 import Prelude
-import Math (round)
-import Data.NonEmpty ((:|))
-import Flare (UI, number, radioGroup, runFlare)
 
-data TUnit = Celsius | Kelvin | Fahrenheit
+import Data.Maybe (fromJust)
+import Effect (Effect)
+import Graphics.Canvas (getCanvasElementById, getContext2D)
+import Graphics.Drawing (render)
+import Partial.Unsafe (unsafePartial)
 
-toString :: TUnit -> String
-toString Celsius    = "°C"
-toString Kelvin     = "K"
-toString Fahrenheit = "°F"
+import Fractal (Letter(..), draw, grow)
 
-toKelvin :: TUnit -> Number -> Number
-toKelvin Celsius    tc = tc + 273.15
-toKelvin Kelvin     tk = tk
-toKelvin Fahrenheit t = (t + 459.67) * 5.0 / 9.0
+main :: Effect Unit
+main = do
+    mcanvas <- getCanvasElementById "canvas"
+    let canvas = unsafePartial (fromJust mcanvas)
+    ctx <- getContext2D canvas
 
-fromKelvin :: TUnit -> Number -> Number
-fromKelvin Celsius    tc = tc - 273.15
-fromKelvin Kelvin     tk = tk
-fromKelvin Fahrenheit tf = (tf * 9.0 / 5.0) - 459.67
-
-convert :: TUnit -> TUnit -> Number -> Number
-convert from to = round <<< fromKelvin to <<< toKelvin from
-
-render :: Number -> TUnit -> TUnit -> String
-render t from to = show t  <> toString from <> " corresponds to " <>
-                   show t' <> toString to
-  where t' = convert from to t
-
-flare :: UI String
-flare = render <$> number "Temperature" 100.0
-               <*> unit "Unit"
-               <*> unit "Convert to"
-
-  where unit label = radioGroup label (Celsius :| [Kelvin, Fahrenheit]) toString
-
-main = runFlare "controls" "output" flare
+    render ctx $
+      draw $ grow $ grow $ [O]
