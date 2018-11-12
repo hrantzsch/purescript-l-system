@@ -5,7 +5,7 @@ import Prelude
 import Data.Maybe (fromJust)
 import Effect (Effect)
 import Graphics.Canvas (getCanvasElementById, getContext2D)
-import Graphics.Drawing (render)
+import Graphics.Drawing (render, translate)
 import Partial.Unsafe (unsafePartial)
 
 import Fractal (Letter(..), draw, grow)
@@ -17,4 +17,5 @@ main = do
     ctx <- getContext2D canvas
 
     render ctx $
-      draw $ grow $ grow $ [O]
+      translate 300.0 300.0 $
+        draw $ grow $ grow $ [O]
