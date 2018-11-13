@@ -52,27 +52,37 @@ rot vector rad = { x: vector.x * M.cos rad - vector.y * M.sin rad
 type Turtle = { position :: D.Point, rotation :: Number }
 type TurtleStack = NonEmptyArray Turtle
 
-initialStack :: TurtleStack
-initialStack = singleton { position: {x: 0.0, y: 0.0}, rotation: 0.0 }
+newTurtle :: Turtle
+newTurtle = { position: {x: 0.0, y: 0.0}, rotation: 0.0 }
 
 -- move the Turtle based on it's position and rotation
 move :: Turtle -> D.Point -> Turtle
 move t v = t { position = t.position + (rot v t.rotation) }
 
+-- rotate the Turtle
 rotate :: Turtle -> M.Radians -> Turtle
 rotate t a = t { rotation = t.rotation + a}
 
+-- apply a function to the head of a TurtleStack
+onHead :: TurtleStack -> (Turtle -> Turtle) -> TurtleStack
+onHead t f = f (head t) `cons'` tail t
+
+-- remove the head of a TurtleStack
+-- If the stack is emtpy afterwards, return a singleton of the fallback Turtle.
+safeTail :: TurtleStack -> Turtle -> TurtleStack
+safeTail t fallback = case (fromArray $ tail t) of
+      Just some -> some
+      Nothing   -> singleton fallback
+
+-- advance the Turtle according to the instructions for each letter
 advance :: TurtleStack -> Letter -> TurtleStack
-advance t O = cons' (move (head t) leaf) (tail t)
-advance t I = cons' (move (head t) line) (tail t)
+advance t O = onHead t $ flip move leaf
+advance t I = onHead t $ flip move line
 advance t Push = rotate (head t) angle : t
-advance t Pop = cons' (rotate (head popped) (-angle)) (tail popped)
-    where popped = case (fromArray $ tail t) of
-                    Just some -> some
-                    Nothing   -> initialStack
+advance t Pop = onHead (safeTail t newTurtle) $ flip rotate (-angle)
 
 toTurtle :: Word -> Array TurtleStack
-toTurtle = scanl advance $ initialStack
+toTurtle = scanl advance $ singleton newTurtle
 
 draw :: Word -> D.Drawing
 draw = D.outlined (D.lineWidth 5.0) <<< positions <<< toTurtle
