@@ -2,8 +2,8 @@ module Fractal where
 
 import Prelude
 
-import Data.Array (concatMap, scanl)
-import Data.Array.NonEmpty (NonEmptyArray, cons', fromArray, head, singleton, tail, (:))
+import Data.Array (concatMap, fold, scanl, span, uncons, (:))
+import Data.Array.NonEmpty (NonEmptyArray, cons, cons', fromArray, head, singleton, tail)
 import Data.Maybe
 import Graphics.Drawing as D
 import Math (Radians, cos, pi, sin) as M
@@ -45,23 +45,30 @@ line = { x: 0.0, y: 40.0 }
 angle :: M.Radians
 angle = M.pi * 0.25  -- 45 deg
 
+-- | Rotate a vector.
 rot :: D.Point -> M.Radians -> D.Point
 rot vector rad = { x: vector.x * M.cos rad - vector.y * M.sin rad
                  , y: vector.x * M.sin rad - vector.y * M.cos rad }
 
-type Turtle = { position :: D.Point, rotation :: Number }
+-- | Cursor for drawing Logo-like turtle graphics.
+type Turtle = { position :: D.Point, rotation :: Number, draw:: Boolean }
+-- | A stack of `Turtle`, used for push and pop operations.
 type TurtleStack = NonEmptyArray Turtle
+-- | The path of a `Turtle` to draw.
+type TurtlePath = Array Turtle
 
 newTurtle :: Turtle
-newTurtle = { position: {x: 0.0, y: 0.0}, rotation: 0.0 }
+newTurtle = { position: {x: 0.0, y: 0.0}
+            , rotation: 0.0
+            , draw: true }
 
 -- | Move the `Turtle` based on it's position and rotation.
 move :: Turtle -> D.Point -> Turtle
-move t v = t { position = t.position + (rot v t.rotation) }
+move t v = t { position = t.position + (rot v t.rotation), draw = true }
 
 -- | Rotate the `Turtle`.
 rotate :: Turtle -> M.Radians -> Turtle
-rotate t a = t { rotation = t.rotation + a}
+rotate t a = t { rotation = t.rotation + a, draw = true }
 
 -- | Apply a function to the head of a `TurtleStack`.
 onHead :: TurtleStack -> (Turtle -> Turtle) -> TurtleStack
@@ -78,12 +85,23 @@ safeTail t fallback = case (fromArray $ tail t) of
 advance :: TurtleStack -> Letter -> TurtleStack
 advance t O = onHead t $ flip move leaf
 advance t I = onHead t $ flip move line
-advance t Push = rotate (head t) angle : t
-advance t Pop = onHead (safeTail t newTurtle) $ flip rotate (-angle)
+advance t Push = cons (rotate (head t) angle) t
+advance t Pop = onHead (safeTail t newTurtle) $
+                  (\h -> h { draw = false }) <<< flip rotate (-angle)
 
-toTurtle :: Word -> Array TurtleStack
-toTurtle = scanl advance $ singleton newTurtle
+toTurtle :: Word -> TurtlePath
+toTurtle = map head <<< scanl advance (singleton newTurtle)
+
+spans :: TurtlePath -> Array (TurtlePath)
+spans [] = [[]]
+spans t = split.init : spans rest
+    where split = span (_.draw) t
+          rest = case uncons split.rest of
+                      Just { head: x, tail: xs } -> x { draw = true } : xs
+                      Nothing -> []
+
+drawPath :: TurtlePath -> D.Drawing
+drawPath = D.outlined (D.lineWidth 4.0) <<< D.path <<< map (_.position)
 
 draw :: Word -> D.Drawing
-draw = D.outlined (D.lineWidth 5.0) <<< positions <<< toTurtle
-    where positions = D.path <<< map \t -> (head t).position
+draw = fold <<< map drawPath <<< spans <<< toTurtle
