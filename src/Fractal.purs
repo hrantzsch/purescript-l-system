@@ -35,8 +35,9 @@ produce I = [I, I]
 produce Push = [Push]
 produce Pop = [Pop]
 
-grow :: Word -> Word
-grow = concatMap produce
+grow :: Int -> Word -> Word
+grow 0 w = w
+grow n w = concatMap produce $ grow (n-1) w
 
 leaf :: D.Point
 leaf = { x: 0.0, y: 20.0 }

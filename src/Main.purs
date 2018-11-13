@@ -16,7 +16,11 @@ main = do
     let canvas = unsafePartial (fromJust mcanvas)
     ctx <- getContext2D canvas
 
+    let left = translate 150.0 700.0
+    let center = translate 300.0 700.0
+    let right = translate 500.0 700.0
+
     render ctx $
-      translate 400.0 800.0 $
-        {-- scale 0.4 0.4 $ --}
-          draw $ grow $ grow $ grow $ grow $ [O]
+      (left $ draw $ grow 3 [O]) <>
+      (center $ draw $ grow 2 [O]) <>
+      (right $ draw $ grow 4 [O])
