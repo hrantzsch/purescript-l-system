@@ -2,7 +2,9 @@ module Fractal where
 
 import Prelude
 
-import Data.Array as A
+import Data.Array (concatMap, scanl)
+import Data.Array.NonEmpty (NonEmptyArray, cons', fromArray, head, singleton, tail, (:))
+import Data.Maybe
 import Graphics.Drawing as D
 import Math (Radians, cos, pi, sin) as M
 
@@ -34,7 +36,7 @@ produce Push = [Push]
 produce Pop = [Pop]
 
 grow :: Word -> Word
-grow = A.concatMap produce
+grow = concatMap produce
 
 leaf :: D.Point
 leaf = { x: 0.0, y: 20.0 }
@@ -47,21 +49,31 @@ rot :: D.Point -> M.Radians -> D.Point
 rot vector rad = { x: vector.x * M.cos rad - vector.y * M.sin rad
                  , y: vector.x * M.sin rad - vector.y * M.cos rad }
 
-advance :: Turtle -> Letter -> Turtle
-advance t O = t { position = t.position + (rot leaf t.rotation) }
-advance t I = t { position = t.position + (rot line t.rotation) }
-advance t Push = t { rotation = t.rotation + angle }
-advance t Pop = t
-
-toTurtle :: Word -> Array Turtle
-toTurtle = A.scanl advance newTurtle
-
 type Turtle = { position :: D.Point, rotation :: Number }
-newTurtle :: Turtle
-newTurtle = { position: {x: 0.0, y: 0.0}, rotation: 0.0 }
+type TurtleStack = NonEmptyArray Turtle
 
-toShape :: Array Turtle -> D.Shape
-toShape = D.path <<< map \t -> t.position
+initialStack :: TurtleStack
+initialStack = singleton { position: {x: 0.0, y: 0.0}, rotation: 0.0 }
+
+-- move the Turtle based on it's position and rotation
+move :: Turtle -> D.Point -> Turtle
+move t v = t { position = t.position + (rot v t.rotation) }
+
+rotate :: Turtle -> M.Radians -> Turtle
+rotate t a = t { rotation = t.rotation + a}
+
+advance :: TurtleStack -> Letter -> TurtleStack
+advance t O = cons' (move (head t) leaf) (tail t)
+advance t I = cons' (move (head t) line) (tail t)
+advance t Push = rotate (head t) angle : t
+advance t Pop = cons' (rotate (head popped) (-angle)) (tail popped)
+    where popped = case (fromArray $ tail t) of
+                    Just some -> some
+                    Nothing   -> initialStack
+
+toTurtle :: Word -> Array TurtleStack
+toTurtle = scanl advance $ initialStack
 
 draw :: Word -> D.Drawing
-draw w = D.outlined (D.lineWidth 5.0) $ toShape $ toTurtle w
+draw = D.outlined (D.lineWidth 5.0) <<< positions <<< toTurtle
+    where positions = D.path <<< map \t -> (head t).position
