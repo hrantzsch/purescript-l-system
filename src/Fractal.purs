@@ -55,26 +55,26 @@ type TurtleStack = NonEmptyArray Turtle
 newTurtle :: Turtle
 newTurtle = { position: {x: 0.0, y: 0.0}, rotation: 0.0 }
 
--- move the Turtle based on it's position and rotation
+-- | Move the `Turtle` based on it's position and rotation.
 move :: Turtle -> D.Point -> Turtle
 move t v = t { position = t.position + (rot v t.rotation) }
 
--- rotate the Turtle
+-- | Rotate the `Turtle`.
 rotate :: Turtle -> M.Radians -> Turtle
 rotate t a = t { rotation = t.rotation + a}
 
--- apply a function to the head of a TurtleStack
+-- | Apply a function to the head of a `TurtleStack`.
 onHead :: TurtleStack -> (Turtle -> Turtle) -> TurtleStack
 onHead t f = f (head t) `cons'` tail t
 
--- remove the head of a TurtleStack
--- If the stack is emtpy afterwards, return a singleton of the fallback Turtle.
+-- | Remove the head of a `TurtleStack`.
+-- | If the stack is emtpy afterwards, return `fallback` as a singleton.
 safeTail :: TurtleStack -> Turtle -> TurtleStack
 safeTail t fallback = case (fromArray $ tail t) of
       Just some -> some
       Nothing   -> singleton fallback
 
--- advance the Turtle according to the instructions for each letter
+-- | Advance the `Turtle` according to the instructions for each letter.
 advance :: TurtleStack -> Letter -> TurtleStack
 advance t O = onHead t $ flip move leaf
 advance t I = onHead t $ flip move line
