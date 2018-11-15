@@ -8,7 +8,8 @@ import Graphics.Canvas (getCanvasElementById, getContext2D)
 import Graphics.Drawing (render, scale, translate)
 import Partial.Unsafe (unsafePartial)
 
-import Fractal (Letter(..), draw, grow)
+import LSystem (draw, grow) as LS
+import FractalTree (axiom) as FT
 
 main :: Effect Unit
 main = do
@@ -21,6 +22,7 @@ main = do
     let right = translate 500.0 700.0
 
     render ctx $
-      (left $ draw $ grow 3 [O]) <>
-      (center $ draw $ grow 2 [O]) <>
-      (right $ draw $ grow 4 [O])
+      (left $ LS.draw $ LS.grow 3 FT.axiom) <>
+      (center $ LS.draw $ LS.grow 2 FT.axiom) <>
+      (translate 370.0 670.0 $ scale 0.1 0.1 $ LS.draw $ LS.grow 7 FT.axiom) <>
+      (right $ LS.draw $ LS.grow 4 FT.axiom)
