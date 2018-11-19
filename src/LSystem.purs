@@ -21,7 +21,7 @@ render :: forall a. LSystem a => Array a -> Array Turtle
 render w = walk w advance
 
 drawPath :: TurtlePath -> D.Drawing
-drawPath = D.outlined (D.lineWidth 4.0) <<< D.path <<< map (_.position)
+drawPath = D.outlined (D.lineWidth 2.0) <<< D.path <<< map (_.position)
 
 draw :: forall a. LSystem a => Array a -> D.Drawing
 draw = fold <<< map drawPath <<< spans <<< render
