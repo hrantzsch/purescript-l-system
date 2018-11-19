@@ -3,7 +3,7 @@ module Turtle where
 import Prelude
 
 import Data.Array (scanl, span, uncons, (:))
-import Data.Array.NonEmpty (NonEmptyArray, cons', fromArray, head, singleton, tail)
+import Data.Array.NonEmpty (NonEmptyArray, cons, cons', fromArray, head, singleton, tail)
 import Data.Maybe (Maybe(..))
 import Math (Radians, cos, sin) as M
 
@@ -39,6 +39,14 @@ rotate t a = t { rotation = t.rotation + a, drawing = true }
 -- | Apply a function to the head of a `TurtleStack`.
 onHead :: TurtleStack -> (Turtle -> Turtle) -> TurtleStack
 onHead t f = f (head t) `cons'` tail t
+
+-- | Duplicate the current head on top of the `TurtleStack`.
+push :: TurtleStack -> TurtleStack
+push t = cons (head t) t
+
+-- | Remove the current head from the `TurtleStack`. Don't draw.
+pop :: TurtleStack -> TurtleStack
+pop t = onHead (safeTail t newTurtle) _{ drawing = false }
 
 -- | Remove the head of a `TurtleStack`.
 -- | If the stack is emtpy afterwards, return `fallback` as a singleton.
