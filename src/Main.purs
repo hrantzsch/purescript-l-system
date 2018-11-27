@@ -1,32 +1,29 @@
 module Main where
 
-import Prelude (Unit, bind, ($), (<>))
+import Prelude (Unit, ($), (/), (<<<))
+import Control.Apply (lift2)
 
-import Data.Maybe (fromJust)
 import Effect (Effect)
-import Graphics.Canvas (getCanvasElementById, getContext2D)
-import Graphics.Drawing (render, scale, translate)
-import Partial.Unsafe (unsafePartial)
+import Flare (UI, int, numberSlider)
+import Flare.Drawing (Drawing, runFlareDrawing, scale, translate)
 
-import LSystem (draw, grow)
+import LSystem (class LSystem, draw, grow)
 import FractalTree (axiom) as FT
 import SierpinskiTriangle (axiom) as ST
 import FractalPlant (axiom) as FP
 
+drawing :: forall a. LSystem a => Array a -> Int -> Number -> Drawing
+drawing axiom iterations sc =
+    translate 400.0 800.0 <<< scale sc sc $
+        draw (1.0 / sc) $ grow iterations axiom
+
+draw' :: forall a. LSystem a => Array a -> Drawing
+draw' axiom = drawing axiom 3 0.5
+
+createUI :: UI Drawing
+createUI = lift2 (drawing FP.axiom)
+    (int "iterations" 3)
+    (numberSlider "scale" 0.1 1.0 0.1 1.0)
+
 main :: Effect Unit
-main = do
-    mcanvas <- getCanvasElementById "canvas"
-    let canvas = unsafePartial (fromJust mcanvas)
-    ctx <- getContext2D canvas
-
-    let left = translate 150.0 700.0
-    let center = translate 300.0 700.0
-    let right = translate 500.0 700.0
-
-    render ctx $
-      (left $ draw $ grow 3 FT.axiom) <>
-      (center $ draw $ grow 2 FT.axiom) <>
-      (translate 370.0 670.0 $ scale 0.1 0.1 $ draw $ grow 7 FT.axiom) <>
-      (right $ draw $ grow 4 FT.axiom) <>
-      (translate 100.0 770.0 $ scale 0.3 0.3 $ draw $ grow 6 $ ST.axiom) <>
-      (translate 400.0 900.0 $ scale 0.15 0.15 $  draw $ grow 6 FP.axiom)
+main = runFlareDrawing "controls" "canvas" createUI

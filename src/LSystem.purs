@@ -20,8 +20,8 @@ grow n w = concatMap produce $ grow (n-1) w
 render :: forall a. LSystem a => Array a -> Array Turtle
 render w = walk w advance
 
-drawPath :: TurtlePath -> D.Drawing
-drawPath = D.outlined (D.lineWidth 2.0) <<< D.path <<< map (_.position)
+drawPath :: Number -> TurtlePath -> D.Drawing
+drawPath lineWidth = D.outlined (D.lineWidth lineWidth) <<< D.path <<< map (_.position)
 
-draw :: forall a. LSystem a => Array a -> D.Drawing
-draw = fold <<< map drawPath <<< spans <<< render
+draw :: forall a. LSystem a => Number -> Array a -> D.Drawing
+draw lineWidth = fold <<< map (drawPath lineWidth) <<< spans <<< render
