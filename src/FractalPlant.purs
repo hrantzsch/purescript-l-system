@@ -5,7 +5,7 @@ import Prelude (class Show, flip, negate, ($), (*), (/))
 import Math (Radians, pi) as M
 
 import LSystem
-import Turtle (Position, move, newTurtle, onHead, push, pop, rotate, safeTail)
+import Turtle (Position, move, onHead, pop, push, rotate)
 
 {-
     variables : X F
