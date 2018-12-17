@@ -1,26 +1,25 @@
 module Main where
 
-import Prelude (Unit, ($), (/), (<<<))
-import Control.Apply (lift2)
+import Prelude
 
+import Data.Maybe (fromJust)
 import Effect (Effect)
-import Flare (UI, int, numberSlider)
-import Flare.Drawing (Drawing, runFlareDrawing, scale, translate)
+import Graphics.Canvas (getCanvasElementById, getContext2D)
+import Graphics.Drawing (Drawing, render, scale, translate)
+import Partial.Unsafe (unsafePartial)
 
-import LSystem (class LSystem, draw, grow)
-import FractalTree (axiom) as FT
-import SierpinskiTriangle (axiom) as ST
+import LSystem (class LSystem)
+import LSystem (draw, grow) as LS
 import FractalPlant (axiom) as FP
 
-drawing :: forall a. LSystem a => Array a -> Int -> Number -> Drawing
-drawing axiom iterations sc =
-    translate 400.0 800.0 <<< scale sc sc $
-        draw (1.0 / sc) $ grow iterations axiom
+drawOnCanvas :: Drawing -> Effect Unit
+drawOnCanvas drawing = do
+    mcanvas <- getCanvasElementById "canvas"
+    ctx <- getContext2D $ unsafePartial $ fromJust mcanvas
+    render ctx drawing
 
-createUI :: UI Drawing
-createUI = lift2 (drawing FP.axiom)
-    (int "iterations" 3)
-    (numberSlider "scale" 0.1 1.0 0.1 1.0)
+scaleAndDraw :: forall a. LSystem a => Array a -> Drawing
+scaleAndDraw = translate 400.0 800.0 <<< scale 0.4 0.4 <<< LS.draw (2.0)
 
 main :: Effect Unit
-main = runFlareDrawing "controls" "canvas" createUI
+main = drawOnCanvas $ scaleAndDraw $ LS.grow 4 FP.axiom
